@@ -1,0 +1,2031 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบค้นหารายชื่อประชากรหมู่ที่ 7</title>
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- AOS Animation CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
+
+  <!-- SweetAlert2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+
+  <!-- jQuery (required for DataTables) -->
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+  <!-- DataTables CSS -->
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css">
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css">
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+  <style>
+    body {
+      background-color: #f8f9fa;
+      font-family: 'Segoe UI', 'Kanit', sans-serif;
+    }
+
+    .navbar-brand {
+      font-weight: 600;
+    }
+
+    .login-container,
+    .search-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 30px;
+      background-color: white;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      margin-top: 30px;
+    }
+
+    .user-info {
+      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .search-form {
+      background-color: #f8f9fa;
+      padding: 25px;
+      border-radius: 15px;
+      margin-bottom: 30px;
+      border: 1px solid #e9ecef;
+    }
+
+    .search-form h5 {
+      color: #495057;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #dee2e6;
+    }
+
+    .form-label {
+      font-weight: 600;
+      color: #495057;
+    }
+
+    .search-input-group {
+      position: relative;
+    }
+
+    .search-icon {
+      position: absolute;
+      top: 12px;
+      left: 15px;
+      color: #6c757d;
+    }
+
+    .search-input {
+      padding-left: 45px;
+      border-radius: 8px;
+      height: 45px;
+    }
+
+    .search-btn-group {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .search-btn {
+      border-radius: 8px;
+      padding: 10px 25px;
+      margin: 0 5px;
+      min-width: 120px;
+    }
+
+    .result-card {
+      border-left: 5px solid #0d6efd;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      transition: transform 0.3s ease;
+    }
+
+    .result-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .result-header {
+      background-color: #f8f9fa;
+      border-bottom: 1px solid #dee2e6;
+      padding: 10px 15px;
+      border-radius: 10px 10px 0 0;
+      font-weight: 600;
+    }
+
+    .result-body {
+      padding: 15px;
+    }
+
+    .data-label {
+      font-weight: 600;
+      color: #495057;
+      margin-bottom: 5px;
+    }
+
+    .data-value {
+      color: #212529;
+      margin-bottom: 10px;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 40px 20px;
+      color: #6c757d;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding: 20px;
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+
+    .loading-spinner {
+      display: none;
+      text-align: center;
+      padding: 30px;
+    }
+
+    .logo {
+      font-weight: 700;
+      color: #0d6efd;
+      font-size: 1.5rem;
+    }
+
+    .data-stats {
+      background-color: #e9ecef;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .error-info {
+      background-color: #fff3cd;
+      border: 1px solid #ffc107;
+      color: #856404;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 768px) {
+
+      .login-container,
+      .search-container {
+        padding: 20px;
+        margin-top: 20px;
+      }
+
+      .search-form {
+        padding: 15px;
+      }
+
+      .search-btn {
+        margin-bottom: 10px;
+        width: 100%;
+      }
+    }
+
+    /* DataTables Custom Styling */
+    .dataTables_wrapper {
+      margin-top: 20px;
+    }
+
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter {
+      margin-bottom: 15px;
+    }
+
+    .dataTables_wrapper .dataTables_filter input {
+      border-radius: 5px;
+      padding: 5px 10px;
+      border: 1px solid #ced4da;
+    }
+
+    .dataTables_wrapper .dataTables_info {
+      padding-top: 10px;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+      border-radius: 5px !important;
+      margin: 0 2px;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+      background: #0d6efd !important;
+      color: white !important;
+      border: 1px solid #0d6efd !important;
+    }
+
+    /* ปุ่ม DataTables */
+    .dt-buttons .btn {
+      margin-right: 5px;
+      margin-bottom: 5px;
+    }
+
+    /* เอฟเฟกต์เมื่อคัดลอกสำเร็จ */
+    @keyframes copySuccess {
+      0% {
+        background-color: #d4edda;
+      }
+
+      100% {
+        background-color: transparent;
+      }
+    }
+
+    .copy-success {
+      animation: copySuccess 1s ease;
+    }
+
+    /* ส่วนของ Log */
+    .log-container {
+      margin-top: 30px;
+      padding: 20px;
+      background-color: white;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items-center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .log-item {
+      padding: 10px 0;
+      border-bottom: 1px solid #f5f5f5;
+    }
+
+    .log-item:last-child {
+      border-bottom: none;
+    }
+
+    .log-time {
+      font-size: 0.85rem;
+      color: #6c757d;
+    }
+
+    .log-user {
+      font-weight: 600;
+      color: #495057;
+    }
+
+    .log-action {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .log-in {
+      background-color: #d1e7dd;
+      color: #0f5132;
+    }
+
+    .log-out {
+      background-color: #f8d7da;
+      color: #842029;
+    }
+
+    .log-system {
+      background-color: #cfe2ff;
+      color: #084298;
+    }
+
+    /* Modal สำหรับแสดง Log ทั้งหมด */
+    .log-modal .modal-content {
+      border-radius: 15px;
+    }
+
+    .log-modal .modal-header {
+      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+      color: white;
+      border-radius: 15px 15px 0 0;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .dataTables_wrapper .dataTables_length,
+      .dataTables_wrapper .dataTables_filter {
+        text-align: center;
+      }
+      
+      .dt-buttons {
+        text-align: center;
+      }
+      
+      .log-container {
+        padding: 15px;
+      }
+    }
+
+    /* Quick Search Toggle */
+    .quick-search-toggle {
+      cursor: pointer;
+      color: #0d6efd;
+      font-size: 0.9rem;
+      margin-bottom: 15px;
+      display: inline-block;
+    }
+
+    .quick-search-toggle:hover {
+      text-decoration: underline;
+    }
+
+    .navbar-brand img {
+      width: 48px;
+      height: 48px;
+    }
+    
+    .login-container img {
+      border-radius: 100%;
+      width: 40%;
+      height: 40%;
+    }
+    
+    /* ปุ่ม View Details */
+    .view-details-btn {
+      padding: 3px 8px;
+      font-size: 0.85rem;
+    }
+    
+    /* Modal สำหรับดูรายละเอียด */
+    .detail-modal .modal-body {
+      padding: 20px;
+    }
+    
+    .detail-item {
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .detail-label {
+      font-weight: 600;
+      color: #495057;
+      min-width: 200px;
+    }
+    
+    .detail-value {
+      color: #212529;
+    }
+    
+    /* คลาสสำหรับการเลือกแถว */
+    .selected-row {
+      background-color: rgba(13, 110, 253, 0.1) !important;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center logo" href="#">
+        <img src="https://i.ibb.co/HD1ZZsWy/Population-search-system-Logo.png"
+          alt="โลโก้ระบบค้นหารายชื่อประชากรหมู่ที่ 7" width="40" height="40" class="me-2">
+        ระบบค้นหารายชื่อประชากรหมู่ที่ 7
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <div id="userProfile" class="d-none">
+              <div class="d-flex align-items-center">
+                <img id="userPhoto" class="rounded-circle me-2" width="35" height="35" src="" alt="User Photo">
+                <span id="userName" class="nav-link text-dark p-0"></span>
+                <button id="logoutBtn" class="btn btn-outline-danger btn-sm ms-3">ออกจากระบบ</button>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Login Section (Shown when not logged in) -->
+  <div id="loginSection" class="container">
+    <div class="login-container" data-aos="fade-up">
+      <div class="text-center mb-4">
+        <img src="https://i.ibb.co/HD1ZZsWy/Population-search-system-Logo.png"
+          alt="โลโก้ระบบค้นหารายชื่อประชากรหมู่ที่ 7" width="120" class="mb-3">
+        <h2 class="mb-3">ระบบค้นหารายชื่อประชากรหมู่ที่ 7</h2>
+        <p class="text-muted">กรุณาล็อกอินด้วย Google Account เพื่อเข้าถึงระบบ</p>
+      </div>
+
+      <div class="d-flex justify-content-center">
+        <button id="googleLoginBtn" class="btn btn-lg btn-primary d-flex align-items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-google me-2"
+            viewBox="0 0 16 16">
+            <path
+              d="M15.545 6.558a9.42 9.42 0 0 1 .139 1.626c0 2.434-.87 4.492-2.384 5.885h.002C11.978 15.292 10.158 16 8 16A8 8 0 1 1 8 0a7.689 7.689 0 0 1 5.352 2.082l-2.284 2.284A4.347 4.347 0 0 0 8 3.166c-2.087 0-3.86 1.408-4.492 3.304a4.792 4.792 0 0 0 0 3.063h.003c.635 1.893 2.405 3.301 4.492 3.301 1.078 0 2.004-.276 2.722-.764h-.003a3.702 3.702 0 0 0 1.599-2.431H8v-3.08h7.545z" />
+          </svg>
+          ล็อกอินด้วย Google
+        </button>
+      </div>
+
+      <div class="mt-4 text-center">
+        <small class="text-muted">ระบบนี้ใช้สำหรับค้นหาข้อมูลเท่านั้น!</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Section (Shown when logged in) -->
+  <div id="searchSection" class="container d-none">
+    <div class="search-container" data-aos="fade-up">
+      <!-- User Info -->
+      <div class="user-info">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="mb-1">ยินดีต้อนรับ</h5>
+            <p class="mb-0" id="welcomeMessage"></p>
+          </div>
+          <img id="userPhotoLarge" class="rounded-circle" width="60" height="60" src="" alt="User Photo">
+        </div>
+      </div>
+
+      <!-- Database Stats -->
+      <div id="dbStats" class="data-stats d-none">
+        <div class="row text-center">
+          <div class="col-md-4">
+            <h5 id="totalRecords">0</h5>
+            <small class="text-muted">จำนวนรายการทั้งหมด</small>
+          </div>
+          <div class="col-md-4">
+            <h5 id="lastUpdated">-</h5>
+            <small class="text-muted">อัปเดตล่าสุด</small>
+          </div>
+          <div class="col-md-4">
+            <h5 id="searchResultsCount">0</h5>
+            <small class="text-muted">ผลการค้นหา</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Debug Info -->
+      <div id="debugInfo" class="error-info d-none">
+        <h6>ข้อมูลการดีบัก:</h6>
+        <p id="debugMessage" class="mb-0 small"></p>
+      </div>
+
+      <!-- Quick Search Toggle -->
+      <div class="text-end mb-2">
+        <span id="quickSearchToggle" class="quick-search-toggle">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search me-1"
+            viewBox="0 0 16 16">
+            <path
+              d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
+          </svg>
+          แสดงช่องค้นหาแบบย่อ
+        </span>
+      </div>
+
+      <!-- Advanced Search Form -->
+      <div class="search-form" id="advancedSearchForm">
+        <h5 class="text-center">ค้นหาข้อมูลประชากร</h5>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="houseNumber" class="form-label">หมายเลขประจำบ้าน</label>
+            <div class="search-input-group">
+              <div class="search-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                  class="bi bi-house-door" viewBox="0 0 16 16">
+                  <path
+                    d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146zM2.5 14V7.707l5.5-5.5 5.5 5.5V14H10v-4a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5v4H2.5z" />
+                </svg>
+              </div>
+              <input type="text" class="form-control search-input" id="houseNumber" placeholder="เช่น: 123, 45/6">
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label for="idCard" class="form-label">เลขประจำตัวประชาชน</label>
+            <div class="search-input-group">
+              <div class="search-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                  class="bi bi-person-badge" viewBox="0 0 16 16">
+                  <path d="M6.5 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1h-3zM11 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
+                  <path
+                    d="M4.5 0A2.5 2.5 0 0 0 2 2.5V14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2.5A2.5 2.5 0 0 0 11.5 0h-7zM3 2.5A1.5 1.5 0 0 1 4.5 1h7A1.5 1.5 0 0 1 13 2.5v10.795a4.2 4.2 0 0 0-.776-.492C11.392 12.387 10.063 12 8 12s-3.392.387-4.224.803a4.2 4.2 0 0 0-.776.492V2.5z" />
+                </svg>
+              </div>
+              <input type="text" class="form-control search-input" id="idCard" placeholder="เช่น: 1-2345-67891-01-1">
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label for="firstName" class="form-label">ชื่อ</label>
+            <div class="search-input-group">
+              <div class="search-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person"
+                  viewBox="0 0 16 16">
+                  <path
+                    d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z" />
+                </svg>
+              </div>
+              <input type="text" class="form-control search-input" id="firstName" placeholder="เช่น: สมชาย, สมหญิง">
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label for="lastName" class="form-label">นามสกุล</label>
+            <div class="search-input-group">
+              <div class="search-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person"
+                  viewBox="0 0 16 16">
+                  <path
+                    d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z" />
+                </svg>
+              </div>
+              <input type="text" class="form-control search-input" id="lastName" placeholder="เช่น: ใจดี, สุขใจ">
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="search-btn-group">
+              <button id="searchBtn" class="btn btn-primary search-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                  class="bi bi-search me-2" viewBox="0 0 16 16">
+                  <path
+                    d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
+                </svg>
+                ค้นหา
+              </button>
+              <button id="clearBtn" class="btn btn-outline-secondary search-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                  class="bi bi-x-circle me-2" viewBox="0 0 16 16">
+                  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                  <path
+                    d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+                </svg>
+                ล้างข้อมูล
+              </button>
+              <button id="showAllBtn" class="btn btn-outline-info search-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                  class="bi bi-list-ul me-2" viewBox="0 0 16 16">
+                  <path fill-rule="evenodd"
+                    d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm-3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" />
+                </svg>
+                แสดงทั้งหมด
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Search Box (Hidden by default) -->
+      <div class="search-box d-none" id="quickSearchBox">
+        <div class="search-input-group">
+          <div class="search-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-search"
+              viewBox="0 0 16 16">
+              <path
+                d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
+            </svg>
+          </div>
+          <input type="text" id="quickSearchInput" class="form-control search-input"
+            placeholder="ค้นหาด้วยชื่อ-นามสกุล หรือเลขประจำตัวประชาชน... (เช่น: สมชาย, 3-7005-00416-94-8)">
+        </div>
+        <div class="mt-3 text-center">
+          <button id="quickSearchBtn" class="btn btn-primary search-btn">ค้นหาแบบด่วน</button>
+          <button id="showAdvancedBtn" class="btn btn-outline-primary search-btn ms-2">ค้นหาแบบละเอียด</button>
+        </div>
+      </div>
+
+      <!-- Loading Spinner -->
+      <div id="loadingSpinner" class="loading-spinner">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">กำลังโหลด...</span>
+        </div>
+        <p class="mt-2">กำลังค้นหาข้อมูล...</p>
+      </div>
+
+      <!-- Search Results -->
+      <div id="searchResults"></div>
+    </div>
+
+    <!-- Log Section -->
+    <div class="log-container" data-aos="fade-up">
+      <div class="log-header">
+        <h5 class="mb-0">บันทึกการเข้า-ออกระบบ</h5>
+        <button id="viewAllLogsBtn" class="btn btn-outline-primary btn-sm">ดูทั้งหมด</button>
+      </div>
+
+      <div id="recentLogs">
+        <!-- Recent logs will be displayed here -->
+        <div class="text-center text-muted py-3">
+          <div class="spinner-border spinner-border-sm" role="status">
+            <span class="visually-hidden">กำลังโหลด...</span>
+          </div>
+          <span class="ms-2">กำลังโหลดบันทึก...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="container">
+      <p>ระบบค้นหารายชื่อประชากรหมู่ที่ 7 &copy; 2023</p>
+      <p class="small">ใช้สำหรับค้นหาข้อมูลเท่านั้น!</p>
+    </div>
+  </div>
+
+  <!-- Modal สำหรับแสดง Log ทั้งหมด -->
+  <div class="modal fade log-modal" id="allLogsModal" tabindex="-1" aria-labelledby="allLogsModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="allLogsModalLabel">บันทึกการเข้า-ออกระบบทั้งหมด</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="allLogsContent">
+            <!-- All logs will be displayed here -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal สำหรับดูรายละเอียด -->
+  <div class="modal fade detail-modal" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="detailModalLabel">รายละเอียดข้อมูลประชากร</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="detailModalBody">
+          <!-- Details will be inserted here -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- AOS JS -->
+  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+
+  <!-- SweetAlert2 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+
+  <!-- DataTables JS -->
+  <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+  <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+  <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
+  <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+  <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+  <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
+  <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/responsive/2.4.1/js/responsive.bootstrap5.min.js"></script>
+
+  
+
+  <!-- Firebase and App Script -->
+  <script>
+    // ไฟร์เบสคอนฟิก
+    const firebaseConfig = {
+      apiKey: "AIzaSyDDOlnwzmujOPOlXUbWYrgK5YjnqI7hyrI",
+      authDomain: "list-of-eligible-voters.firebaseapp.com",
+      databaseURL: "https://list-of-eligible-voters-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "list-of-eligible-voters",
+      storageBucket: "list-of-eligible-voters.firebasestorage.app",
+      messagingSenderId: "307610806047",
+      appId: "1:307610806047:web:d53aeafa11d62dd2ef722a"
+    };
+
+    // กำหนดค่าเริ่มต้นให้ AOS
+    document.addEventListener('DOMContentLoaded', function () {
+      AOS.init({
+        duration: 800,
+        once: true
+      });
+    });
+
+    // เริ่มต้น Firebase
+    let firebaseApp;
+    let auth;
+    let database;
+
+    try {
+      firebaseApp = firebase.initializeApp(firebaseConfig);
+      auth = firebase.auth();
+      database = firebase.database();
+      console.log("Firebase initialized successfully");
+    } catch (error) {
+      console.error("Firebase initialization error:", error);
+      showFirebaseError(error);
+    }
+
+    // อ้างอิง DOM elements
+    const loginSection = document.getElementById('loginSection');
+    const searchSection = document.getElementById('searchSection');
+    const googleLoginBtn = document.getElementById('googleLoginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const userProfile = document.getElementById('userProfile');
+    const userName = document.getElementById('userName');
+    const userPhoto = document.getElementById('userPhoto');
+    const userPhotoLarge = document.getElementById('userPhotoLarge');
+    const welcomeMessage = document.getElementById('welcomeMessage');
+
+    // Search elements
+    const searchBtn = document.getElementById('searchBtn');
+    const quickSearchBtn = document.getElementById('quickSearchBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const showAllBtn = document.getElementById('showAllBtn');
+    const showAdvancedBtn = document.getElementById('showAdvancedBtn');
+    const quickSearchToggle = document.getElementById('quickSearchToggle');
+
+    // Search inputs
+    const houseNumberInput = document.getElementById('houseNumber');
+    const idCardInput = document.getElementById('idCard');
+    const firstNameInput = document.getElementById('firstName');
+    const lastNameInput = document.getElementById('lastName');
+    const quickSearchInput = document.getElementById('quickSearchInput');
+
+    // Search containers
+    const advancedSearchForm = document.getElementById('advancedSearchForm');
+    const quickSearchBox = document.getElementById('quickSearchBox');
+
+    // Results elements
+    const searchResults = document.getElementById('searchResults');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const dbStats = document.getElementById('dbStats');
+    const totalRecords = document.getElementById('totalRecords');
+    const lastUpdated = document.getElementById('lastUpdated');
+    const searchResultsCount = document.getElementById('searchResultsCount');
+    const debugInfo = document.getElementById('debugInfo');
+    const debugMessage = document.getElementById('debugMessage');
+    const recentLogs = document.getElementById('recentLogs');
+    const viewAllLogsBtn = document.getElementById('viewAllLogsBtn');
+    const allLogsModal = new bootstrap.Modal(document.getElementById('allLogsModal'));
+    const allLogsContent = document.getElementById('allLogsContent');
+    const detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
+    const detailModalBody = document.getElementById('detailModalBody');
+
+    // ตัวแปรสำหรับเก็บ DataTable instance
+    let dataTable = null;
+
+    // ตรวจสอบสถานะการล็อกอิน
+    if (auth) {
+      auth.onAuthStateChanged((user) => {
+        if (user) {
+          // ผู้ใช้ล็อกอินอยู่
+          showSearchSection(user);
+          loadDatabaseStats();
+          // บันทึก Log การเข้าระบบ
+          logUserAction(user, 'login');
+          // โหลด Log ล่าสุด
+          loadRecentLogs();
+          // ตั้งค่า realtime listener สำหรับ Log
+          setupLogsListener();
+        } else {
+          // ไม่มีผู้ใช้ล็อกอิน
+          showLoginSection();
+        }
+      });
+    }
+
+    // แสดงส่วนล็อกอิน
+    function showLoginSection() {
+      loginSection.classList.remove('d-none');
+      searchSection.classList.add('d-none');
+      userProfile.classList.add('d-none');
+    }
+
+    // แสดงส่วนค้นหา
+    function showSearchSection(user) {
+      loginSection.classList.add('d-none');
+      searchSection.classList.remove('d-none');
+      userProfile.classList.remove('d-none');
+
+      // แสดงข้อมูลผู้ใช้
+      userName.textContent = user.displayName || user.email;
+      welcomeMessage.textContent = `คุณ ${user.displayName || user.email}`;
+
+      if (user.photoURL) {
+        userPhoto.src = user.photoURL;
+        userPhotoLarge.src = user.photoURL;
+      } else {
+        // ใช้รูปภาพเริ่มต้นหากผู้ใช้ไม่มีรูปโปรไฟล์
+        userPhoto.src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.displayName || user.email) + "&background=0D8ABC&color=fff";
+        userPhotoLarge.src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.displayName || user.email) + "&background=0D8ABC&color=fff&size=60";
+      }
+
+      // ล้างผลการค้นหาก่อนหน้า
+      clearSearchFields();
+      searchResults.innerHTML = '';
+    }
+
+    // แสดงข้อผิดพลาด Firebase
+    function showFirebaseError(error) {
+      debugInfo.classList.remove('d-none');
+      debugMessage.innerHTML = `
+                <strong>ข้อผิดพลาด:</strong> ${error.message || 'ไม่สามารถเชื่อมต่อกับ Firebase ได้'}<br>
+                <strong>สาเหตุที่อาจเป็นไปได้:</strong><br>
+                1. กฎการเข้าถึง (Rules) ใน Firebase Realtime Database<br>
+                2. การเชื่อมต่ออินเทอร์เน็ต<br>
+                3. ข้อมูลคอนฟิก Firebase ไม่ถูกต้อง<br>
+                <strong>แก้ไขเบื้องต้น:</strong> ตรวจสอบกฎการเข้าถึงใน Firebase Console
+            `;
+    }
+
+    // โหลดสถิติฐานข้อมูล
+    function loadDatabaseStats() {
+      if (!database) {
+        showDebugMessage("Database not initialized");
+        return;
+      }
+
+      database.ref().once('value')
+        .then((snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            // นับจำนวน records
+            const recordCount = Object.keys(data).length;
+            totalRecords.textContent = recordCount.toLocaleString();
+
+            // อัปเดตเวลาล่าสุด
+            const now = new Date();
+            lastUpdated.textContent = now.toLocaleTimeString('th-TH');
+
+            // แสดง statistics section
+            dbStats.classList.remove('d-none');
+
+            // ซ่อน debug info ถ้าทำงานปกติ
+            debugInfo.classList.add('d-none');
+
+            console.log("Database stats loaded successfully. Records found:", recordCount);
+            showDebugMessage(`พบข้อมูล ${recordCount} รายการในฐานข้อมูล`);
+          } else {
+            showDebugMessage("ฐานข้อมูลว่างเปล่า (ไม่มีข้อมูล)");
+          }
+        })
+        .catch((error) => {
+          console.error('Error loading database stats:', error);
+          showDebugMessage(`ข้อผิดพลาด: ${error.message || 'ไม่สามารถอ่านข้อมูลได้'}`);
+
+          // แสดงข้อผิดพลาดในการอ่านข้อมูล
+          debugInfo.classList.remove('d-none');
+          debugMessage.innerHTML = `
+                        <strong>ข้อผิดพลาดในการอ่านข้อมูล:</strong> ${error.message || 'ไม่ทราบสาเหตุ'}<br>
+                        <strong>แนวทางแก้ไข:</br>
+                        1. ตรวจสอบว่า Firebase Realtime Database มีการตั้งค่า Rules ที่อนุญาตให้อ่านข้อมูล<br>
+                        2. ตรวจสอบว่ามีข้อมูลอยู่ในฐานข้อมูล<br>
+                    `;
+        });
+    }
+
+    // แสดงข้อความดีบัก
+    function showDebugMessage(message) {
+      console.log("Debug:", message);
+    }
+
+    // ฟังก์ชันบันทึก Log ลง Realtime Database
+    function logUserAction(user, action) {
+      if (!database) {
+        console.error("Database not available for logging");
+        return;
+      }
+
+      const timestamp = new Date().getTime();
+      const date = new Date();
+      const userEmail = user.email;
+      const userName = user.displayName || user.email;
+      const userId = user.uid;
+
+      const logData = {
+        userId: userId,
+        userName: userName,
+        userEmail: userEmail,
+        action: action,
+        timestamp: timestamp,
+        date: date.toLocaleDateString('th-TH'),
+        time: date.toLocaleTimeString('th-TH'),
+        datetime: date.toLocaleString('th-TH')
+      };
+
+      // บันทึกลง Firebase Realtime Database ที่ path /system_logs
+      database.ref('system_logs').push(logData)
+        .then(() => {
+          console.log(`✅ Log recorded: ${userName} ${action} at ${date.toLocaleString('th-TH')}`);
+        })
+        .catch((error) => {
+          console.error("❌ Error recording log:", error);
+          // ถ้าบันทึกไม่ได้ ลองบันทึกใน local storage เป็นการชั่วคราว
+          saveLogToLocalStorage(logData);
+        });
+    }
+
+    // บันทึก Log ใน local storage กรณี Firebase ไม่ทำงาน
+    function saveLogToLocalStorage(logData) {
+      try {
+        let logs = JSON.parse(localStorage.getItem('pending_logs') || '[]');
+        logs.push(logData);
+
+        // จำกัดจำนวน logs ใน local storage
+        if (logs.length > 100) {
+          logs = logs.slice(-50);
+        }
+
+        localStorage.setItem('pending_logs', JSON.stringify(logs));
+        console.log("📦 Log saved to localStorage temporarily");
+      } catch (e) {
+        console.error("Failed to save log to localStorage:", e);
+      }
+    }
+
+    // ส่ง Log ที่ค้างอยู่จาก local storage ไปยัง Firebase
+    function syncPendingLogs() {
+      try {
+        const pendingLogs = JSON.parse(localStorage.getItem('pending_logs') || '[]');
+
+        if (pendingLogs.length > 0 && database) {
+          console.log(`🔄 Syncing ${pendingLogs.length} pending logs to Firebase`);
+
+          pendingLogs.forEach(log => {
+            database.ref('system_logs').push(log)
+              .then(() => {
+                console.log(`✅ Synced pending log: ${log.userName} ${log.action}`);
+              })
+              .catch(error => {
+                console.error("❌ Failed to sync log:", error);
+              });
+          });
+
+          // ลบ logs ที่ sync แล้ว
+          localStorage.removeItem('pending_logs');
+        }
+      } catch (e) {
+        console.error("Error syncing pending logs:", e);
+      }
+    }
+
+    // ตั้งค่า realtime listener สำหรับ Log
+    function setupLogsListener() {
+      if (!database) return;
+
+      // ลบ listener เดิม (ถ้ามี)
+      if (window.logsListener) {
+        database.ref('system_logs').off('value', window.logsListener);
+      }
+
+      // ตั้งค่า listener ใหม่
+      window.logsListener = database.ref('system_logs')
+        .orderByChild('timestamp')
+        .limitToLast(5)
+        .on('value', (snapshot) => {
+          const logs = [];
+          snapshot.forEach((childSnapshot) => {
+            const log = childSnapshot.val();
+            log.id = childSnapshot.key;
+            logs.push(log);
+          });
+
+          // เรียงลำดับจากใหม่ไปเก่า
+          logs.sort((a, b) => b.timestamp - a.timestamp);
+
+          displayRecentLogs(logs);
+        }, (error) => {
+          console.error("Error in logs listener:", error);
+          recentLogs.innerHTML = '<div class="text-center text-muted py-3">ไม่สามารถโหลดบันทึกได้</div>';
+        });
+    }
+
+    // โหลด Log ล่าสุด (5 รายการ)
+    function loadRecentLogs() {
+      if (!database) {
+        recentLogs.innerHTML = '<div class="text-center text-muted py-3">ไม่สามารถโหลดบันทึกได้</div>';
+        return;
+      }
+
+      // พยายาม sync logs ที่ค้างอยู่
+      syncPendingLogs();
+
+      database.ref('system_logs')
+        .orderByChild('timestamp')
+        .limitToLast(5)
+        .once('value')
+        .then((snapshot) => {
+          const logs = [];
+          snapshot.forEach((childSnapshot) => {
+            const log = childSnapshot.val();
+            log.id = childSnapshot.key;
+            logs.push(log);
+          });
+
+          // เรียงลำดับจากใหม่ไปเก่า
+          logs.sort((a, b) => b.timestamp - a.timestamp);
+
+          displayRecentLogs(logs);
+        })
+        .catch((error) => {
+          console.error("Error loading logs:", error);
+
+          // ลองโหลดจาก local storage ถ้า Firebase ไม่ทำงาน
+          loadLogsFromLocalStorage();
+        });
+    }
+
+    // โหลด Log จาก local storage
+    function loadLogsFromLocalStorage() {
+      try {
+        const logs = JSON.parse(localStorage.getItem('pending_logs') || '[]');
+
+        if (logs.length > 0) {
+          // เรียงลำดับจากใหม่ไปเก่า
+          logs.sort((a, b) => b.timestamp - a.timestamp);
+
+          // แสดงแค่ 5 รายการล่าสุด
+          const recentLogsList = logs.slice(0, 5);
+          displayRecentLogs(recentLogsList);
+
+          // แสดงข้อความว่าโหลดจาก local storage
+          const info = document.createElement('div');
+          info.className = 'alert alert-warning alert-sm mt-2';
+          info.innerHTML = '<small>⚠️ กำลังแสดงข้อมูลจากหน่วยความจำชั่วคราว (Firebase ทำงานไม่ปกติ)</small>';
+          recentLogs.appendChild(info);
+        } else {
+          recentLogs.innerHTML = '<div class="text-center text-muted py-3">ไม่มีบันทึกการใช้งาน</div>';
+        }
+      } catch (e) {
+        console.error("Error loading logs from localStorage:", e);
+        recentLogs.innerHTML = '<div class="text-center text-muted py-3">ไม่สามารถโหลดบันทึกได้</div>';
+      }
+    }
+
+    // แสดง Log ล่าสุด
+    function displayRecentLogs(logs) {
+      if (!logs || logs.length === 0) {
+        recentLogs.innerHTML = '<div class="text-center text-muted py-3">ไม่มีบันทึกการใช้งาน</div>';
+        return;
+      }
+
+      let logsHTML = '';
+
+      logs.forEach((log) => {
+        const actionClass = log.action === 'login' ? 'log-in' : 'log-out';
+        const actionText = log.action === 'login' ? 'เข้าสู่ระบบ' : 'ออกจากระบบ';
+
+        // ใช้ datetime ถ้ามี ถ้าไม่มีให้ format ใหม่
+        const displayTime = log.datetime || formatTime(log.timestamp);
+
+        logsHTML += `
+          <div class="log-item">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span class="log-user">ผู้ใช้ : ${log.userName}</span>
+                <span class="log-action ${actionClass} ms-2">${actionText}</span>
+              </div>
+              <div class="log-time">${displayTime}</div>
+            </div>
+          </div>
+        `;
+      });
+
+      recentLogs.innerHTML = logsHTML;
+    }
+
+    // โหลด Log ทั้งหมด
+    function loadAllLogs() {
+      if (!database) {
+        allLogsContent.innerHTML = '<div class="text-center text-muted py-5">ไม่สามารถโหลดบันทึกได้</div>';
+        return;
+      }
+
+      allLogsContent.innerHTML = `
+        <div class="text-center py-3">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">กำลังโหลด...</span>
+          </div>
+          <p class="mt-2">กำลังโหลดบันทึกทั้งหมด...</p>
+        </div>
+      `;
+
+      database.ref('system_logs')
+        .orderByChild('timestamp')
+        .once('value')
+        .then((snapshot) => {
+          const logs = [];
+          snapshot.forEach((childSnapshot) => {
+            const log = childSnapshot.val();
+            log.id = childSnapshot.key;
+            logs.push(log);
+          });
+
+          // เรียงลำดับจากใหม่ไปเก่า
+          logs.sort((a, b) => b.timestamp - a.timestamp);
+
+          displayAllLogs(logs);
+        })
+        .catch((error) => {
+          console.error("Error loading all logs:", error);
+          allLogsContent.innerHTML = '<div class="text-center text-muted py-5">ไม่สามารถโหลดบันทึกได้</div>';
+        });
+    }
+
+    // แสดง Log ทั้งหมด
+    function displayAllLogs(logs) {
+      if (!logs || logs.length === 0) {
+        allLogsContent.innerHTML = '<div class="text-center text-muted py-5">ไม่มีบันทึกการใช้งาน</div>';
+        return;
+      }
+
+      let logsHTML = `
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th width="20%">วันที่และเวลา</th>
+                <th width="20%">ผู้ใช้งาน</th>
+                <th width="10%">การกระทำ</th>
+                <th width="25%">อีเมล</th>
+                <th width="25%">รหัสผู้ใช้</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      logs.forEach((log) => {
+        const actionClass = log.action === 'login' ? 'log-in' : 'log-out';
+        const actionText = log.action === 'login' ? 'เข้าสู่ระบบ' : 'ออกจากระบบ';
+
+        // ใช้ datetime ถ้ามี ถ้าไม่มีให้ format ใหม่
+        const displayTime = log.datetime || formatTime(log.timestamp);
+
+        logsHTML += `
+          <tr>
+            <td>${displayTime}</td>
+            <td><strong>ผู้ใช้ : ${log.userName}</strong></td>
+            <td><span class="log-action ${actionClass}">${actionText}</span></td>
+            <td class="small">${log.userEmail}</td>
+            <td class="small text-muted">${log.userId ? log.userId.substring(0, 8) + '...' : 'N/A'}</td>
+          </tr>
+        `;
+      });
+
+      logsHTML += `
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-3 text-muted small">
+          แสดงทั้งหมด ${logs.length} รายการ
+        </div>
+      `;
+
+      allLogsContent.innerHTML = logsHTML;
+    }
+
+    // รูปแบบเวลา
+    function formatTime(timestamp) {
+      const date = new Date(timestamp);
+      return date.toLocaleString('th-TH');
+    }
+
+    // ล้างช่องค้นหา
+    function clearSearchFields() {
+      houseNumberInput.value = '';
+      idCardInput.value = '';
+      firstNameInput.value = '';
+      lastNameInput.value = '';
+      quickSearchInput.value = '';
+    }
+
+    // ตรวจสอบว่ามีข้อมูลในช่องค้นหาหรือไม่
+    function hasSearchCriteria() {
+      return houseNumberInput.value.trim() !== '' ||
+        idCardInput.value.trim() !== '' ||
+        firstNameInput.value.trim() !== '' ||
+        lastNameInput.value.trim() !== '' ||
+        quickSearchInput.value.trim() !== '';
+    }
+
+    // ล็อกอินด้วย Google
+    googleLoginBtn.addEventListener('click', () => {
+      if (!auth) {
+        Swal.fire({
+          icon: 'error',
+          title: 'ระบบผิดพลาด',
+          text: 'ไม่สามารถเชื่อมต่อกับ Firebase Authentication ได้',
+        });
+        return;
+      }
+
+      const provider = new firebase.auth.GoogleAuthProvider();
+
+      auth.signInWithPopup(provider)
+        .then((result) => {
+          // ล็อกอินสำเร็จ
+          Swal.fire({
+            icon: 'success',
+            title: 'ล็อกอินสำเร็จ',
+            text: 'ยินดีต้อนรับเข้าสู่ระบบค้นหารายชื่อ',
+            timer: 2000,
+            showConfirmButton: false
+          });
+        })
+        .catch((error) => {
+          // เกิดข้อผิดพลาด
+          console.error("Google login error:", error);
+          Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด',
+            text: 'ไม่สามารถล็อกอินได้ กรุณาลองอีกครั้ง',
+            footer: error.message
+          });
+        });
+    });
+
+    // ออกจากระบบ
+    logoutBtn.addEventListener('click', () => {
+      Swal.fire({
+        title: 'คุณต้องการออกจากระบบใช่หรือไม่?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'ออกจากระบบ',
+        cancelButtonText: 'ยกเลิก'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // บันทึก Log ก่อนออกจากระบบ
+          const user = auth.currentUser;
+          if (user) {
+            logUserAction(user, 'logout');
+          }
+
+          auth.signOut()
+            .then(() => {
+              Swal.fire({
+                icon: 'success',
+                title: 'ออกจากระบบสำเร็จ',
+                timer: 1500,
+                showConfirmButton: false
+              });
+            })
+            .catch((error) => {
+              console.error("Logout error:", error);
+            });
+        }
+      });
+    });
+
+    // ดู Log ทั้งหมด
+    viewAllLogsBtn.addEventListener('click', () => {
+      loadAllLogs();
+      allLogsModal.show();
+    });
+
+    // ค้นหาข้อมูลแบบละเอียด
+    searchBtn.addEventListener('click', performAdvancedSearch);
+
+    // ค้นหาแบบด่วน
+    quickSearchBtn.addEventListener('click', performQuickSearch);
+
+    // ค้นหาแบบด่วนเมื่อกด Enter
+    quickSearchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        performQuickSearch();
+      }
+    });
+
+    // ค้นหาแบบละเอียดเมื่อกด Enter ในช่องชื่อหรือนามสกุล
+    firstNameInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        performAdvancedSearch();
+      }
+    });
+
+    lastNameInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        performAdvancedSearch();
+      }
+    });
+
+    houseNumberInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        performAdvancedSearch();
+      }
+    });
+    idCardInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        performAdvancedSearch();
+      }
+    });
+
+    // ล้างผลการค้นหา
+    clearBtn.addEventListener('click', () => {
+      clearSearchFields();
+      searchResults.innerHTML = '';
+      searchResultsCount.textContent = '0';
+      if (dataTable) {
+        dataTable.destroy();
+        dataTable = null;
+      }
+    });
+
+    // แสดงข้อมูลทั้งหมด
+    showAllBtn.addEventListener('click', () => {
+      clearSearchFields();
+      showAllData();
+    });
+
+    // สลับระหว่างช่องค้นหาแบบย่อและแบบละเอียด
+    quickSearchToggle.addEventListener('click', () => {
+      if (advancedSearchForm.classList.contains('d-none')) {
+        // แสดงแบบละเอียด
+        advancedSearchForm.classList.remove('d-none');
+        quickSearchBox.classList.add('d-none');
+        quickSearchToggle.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search me-1" viewBox="0 0 16 16">
+            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+          </svg>
+          แสดงช่องค้นหาแบบย่อ
+        `;
+      } else {
+        // แสดงแบบย่อ
+        advancedSearchForm.classList.add('d-none');
+        quickSearchBox.classList.remove('d-none');
+        quickSearchToggle.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search me-1" viewBox="0 0 16 16">
+            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+          </svg>
+          แสดงช่องค้นหาแบบละเอียด
+        `;
+      }
+    });
+
+    // แสดงช่องค้นหาแบบละเอียด
+    showAdvancedBtn.addEventListener('click', () => {
+      advancedSearchForm.classList.remove('d-none');
+      quickSearchBox.classList.add('d-none');
+      quickSearchToggle.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search me-1" viewBox="0 0 16 16">
+          <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+        </svg>
+        แสดงช่องค้นหาแบบย่อ
+      `;
+    });
+
+    // ฟังก์ชันค้นหาข้อมูลแบบละเอียด
+    function performAdvancedSearch() {
+      const searchCriteria = {
+        houseNumber: houseNumberInput.value.trim(),
+        idCard: idCardInput.value.trim(),
+        firstName: firstNameInput.value.trim(),
+        lastName: lastNameInput.value.trim()
+      };
+
+      // ตรวจสอบว่ามีข้อมูลในช่องค้นหาอย่างน้อยหนึ่งช่อง
+      if (!Object.values(searchCriteria).some(value => value !== '')) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'กรุณากรอกคำค้นหา',
+          text: 'โปรดป้อนข้อมูลในช่องค้นหาอย่างน้อยหนึ่งช่อง',
+        });
+        return;
+      }
+
+      // แสดง spinner การโหลด
+      loadingSpinner.style.display = 'block';
+      searchResults.innerHTML = '';
+
+      // ค้นหาข้อมูลจาก Realtime Database
+      database.ref().once('value')
+        .then((snapshot) => {
+          // ซ่อน spinner
+          loadingSpinner.style.display = 'none';
+
+          const data = snapshot.val();
+          const results = [];
+
+          if (!data) {
+            // ไม่มีข้อมูลในฐานข้อมูล
+            searchResults.innerHTML = `
+          <div class="no-results" data-aos="fade-up">
+            <h4 class="mt-3">ไม่พบข้อมูลในฐานข้อมูล</h4>
+            <p>ฐานข้อมูลว่างเปล่า ไม่มีข้อมูลให้ค้นหา</p>
+          </div>
+        `;
+            searchResultsCount.textContent = '0';
+            return;
+          }
+
+          // ค้นหาข้อมูลที่ตรงกับคำค้นหา
+          Object.keys(data).forEach((key) => {
+            const record = data[key];
+
+            // ตรวจสอบว่าเป็น object และมีข้อมูล
+            if (record && typeof record === 'object') {
+              let matches = true;
+
+              // ตรวจสอบแต่ละเงื่อนไข
+              if (searchCriteria.houseNumber) {
+                const houseNumber = record['เลขหมายประจำบ้าน'] || record['houseNumber'] || '';
+                // แปลงค่าทั้งสองเป็น string ก่อนทำการเปรียบเทียบ
+                const searchHouseNumber = String(searchCriteria.houseNumber).toLowerCase();
+                const recordHouseNumber = String(houseNumber).toLowerCase();
+
+                if (!recordHouseNumber.includes(searchHouseNumber)) {
+                  matches = false;
+                }
+              }
+
+              if (searchCriteria.idCard && matches) {
+                const idCard = record['เลขประจำตัวประชาชน'] || record['id'] || '';
+                const searchIdCard = String(searchCriteria.idCard);
+                if (!idCard.includes(searchIdCard)) {
+                  matches = false;
+                }
+              }
+
+              if (searchCriteria.firstName && matches) {
+                const firstName = record['ชื่อ'] || record['name'] || '';
+                const searchFirstName = String(searchCriteria.firstName).toLowerCase();
+                const recordFirstName = String(firstName).toLowerCase();
+
+                if (!recordFirstName.includes(searchFirstName)) {
+                  matches = false;
+                }
+              }
+
+              if (searchCriteria.lastName && matches) {
+                const lastName = record['namaskul'] || record['นามสกุล'] || '';
+                const searchLastName = String(searchCriteria.lastName).toLowerCase();
+                const recordLastName = String(lastName).toLowerCase();
+
+                if (!recordLastName.includes(searchLastName)) {
+                  matches = false;
+                }
+              }
+
+              if (matches) {
+                results.push({
+                  key: key,
+                  ...record
+                });
+              }
+            }
+          });
+
+          // อัปเดตจำนวนผลลัพธ์
+          searchResultsCount.textContent = results.length;
+
+          // แสดงผลลัพธ์ด้วย DataTables
+          displayResultsWithDataTables(results, 'การค้นหาแบบละเอียด');
+        })
+        .catch((error) => {
+          // ซ่อน spinner
+          loadingSpinner.style.display = 'none';
+
+          console.error("Search error:", error);
+
+          Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด',
+            html: `
+          <div class="text-start">
+            <p>ไม่สามารถดึงข้อมูลได้ กรุณาลองอีกครั้ง</p>
+            <p class="small text-muted"><strong>รายละเอียด:</strong> ${error.message || 'ไม่ทราบสาเหตุ'}</p>
+          </div>
+        `,
+          });
+        });
+    }
+
+    // ฟังก์ชันค้นหาข้อมูลแบบด่วน
+    function performQuickSearch() {
+      const searchTerm = quickSearchInput.value.trim();
+
+      if (!searchTerm) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'กรุณากรอกคำค้นหา',
+          text: 'โปรดป้อนคำค้นหาในช่องค้นหาแบบด่วน',
+        });
+        return;
+      }
+
+      // แสดง spinner การโหลด
+      loadingSpinner.style.display = 'block';
+      searchResults.innerHTML = '';
+
+      // ค้นหาข้อมูลจาก Realtime Database
+      database.ref().once('value')
+        .then((snapshot) => {
+          // ซ่อน spinner
+          loadingSpinner.style.display = 'none';
+
+          const data = snapshot.val();
+          const results = [];
+
+          if (!data) {
+            // ไม่มีข้อมูลในฐานข้อมูล
+            searchResults.innerHTML = `
+          <div class="no-results" data-aos="fade-up">
+            <h4 class="mt-3">ไม่พบข้อมูลในฐานข้อมูล</h4>
+            <p>ฐานข้อมูลว่างเปล่า ไม่มีข้อมูลให้ค้นหา</p>
+          </div>
+        `;
+            searchResultsCount.textContent = '0';
+            return;
+          }
+
+          // ค้นหาข้อมูลที่ตรงกับคำค้นหา
+          Object.keys(data).forEach((key) => {
+            const record = data[key];
+
+            // ตรวจสอบว่าเป็น object และมีข้อมูล
+            if (record && typeof record === 'object') {
+              // ตรวจสอบว่าข้อมูลตรงกับคำค้นหาหรือไม่ (ไม่สนใจตัวพิมพ์เล็ก-ใหญ่)
+              const searchLower = String(searchTerm).toLowerCase();
+
+              // ตรวจสอบทุกฟิลด์ที่อาจมีข้อมูล
+              let found = false;
+
+              // ตรวจสอบทุก key ใน record
+              for (const field in record) {
+                if (record.hasOwnProperty(field)) {
+                  const value = record[field];
+                  // แปลงค่าเป็น string ก่อนทำการเปรียบเทียบ
+                  const stringValue = String(value).toLowerCase();
+                  if (stringValue.includes(searchLower)) {
+                    found = true;
+                    break;
+                  }
+                }
+              }
+
+              if (found) {
+                results.push({
+                  key: key,
+                  ...record
+                });
+              }
+            }
+          });
+
+          // อัปเดตจำนวนผลลัพธ์
+          searchResultsCount.textContent = results.length;
+
+          // แสดงผลลัพธ์ด้วย DataTables
+          displayResultsWithDataTables(results, searchTerm);
+        })
+        .catch((error) => {
+          // ซ่อน spinner
+          loadingSpinner.style.display = 'none';
+
+          console.error("Search error:", error);
+
+          Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด',
+            html: `
+          <div class="text-start">
+            <p>ไม่สามารถดึงข้อมูลได้ กรุณาลองอีกครั้ง</p>
+            <p class="small text-muted"><strong>รายละเอียด:</strong> ${error.message || 'ไม่ทราบสาเหตุ'}</p>
+          </div>
+        `,
+          });
+        });
+    }
+
+    // ฟังก์ชันแสดงข้อมูลทั้งหมด
+    function showAllData() {
+      // แสดง spinner การโหลด
+      loadingSpinner.style.display = 'block';
+      searchResults.innerHTML = '';
+
+      // ค้นหาข้อมูลจาก Realtime Database
+      database.ref().once('value')
+        .then((snapshot) => {
+          // ซ่อน spinner
+          loadingSpinner.style.display = 'none';
+
+          const data = snapshot.val();
+          const results = [];
+
+          if (!data) {
+            // ไม่มีข้อมูลในฐานข้อมูล
+            searchResults.innerHTML = `
+          <div class="no-results" data-aos="fade-up">
+            <h4 class="mt-3">ไม่พบข้อมูลในฐานข้อมูล</h4>
+            <p>ฐานข้อมูลว่างเปล่า ไม่มีข้อมูลให้ค้นหา</p>
+          </div>
+        `;
+            searchResultsCount.textContent = '0';
+            return;
+          }
+
+          // เพิ่มข้อมูลทั้งหมดเข้า results array
+          Object.keys(data).forEach((key) => {
+            const record = data[key];
+            if (record && typeof record === 'object') {
+              results.push({
+                key: key,
+                ...record
+              });
+            }
+          });
+
+          // อัปเดตจำนวนผลลัพธ์
+          searchResultsCount.textContent = results.length;
+
+          // แสดงผลลัพธ์ด้วย DataTables
+          displayResultsWithDataTables(results, 'ข้อมูลทั้งหมด');
+        })
+        .catch((error) => {
+          // ซ่อน spinner
+          loadingSpinner.style.display = 'none';
+
+          console.error("Error loading all data:", error);
+
+          Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด',
+            html: `
+          <div class="text-start">
+            <p>ไม่สามารถดึงข้อมูลได้ กรุณาลองอีกครั้ง</p>
+            <p class="small text-muted"><strong>รายละเอียด:</strong> ${error.message || 'ไม่ทราบสาเหตุ'}</p>
+          </div>
+        `,
+          });
+        });
+    }
+
+    // ฟังก์ชันแสดงผลลัพธ์ด้วย DataTables
+    function displayResultsWithDataTables(results, searchTerm) {
+      searchResults.innerHTML = '';
+
+      if (results.length === 0) {
+        // ไม่พบผลลัพธ์
+        searchResults.innerHTML = `
+          <div class="no-results" data-aos="fade-up">
+            <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="#6c757d" class="bi bi-search" viewBox="0 0 16 16">
+              <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+            </svg>
+            <h4 class="mt-3">ไม่พบรายชื่อที่ตรงกับการค้นหา</h4>
+            <p>ไม่พบข้อมูลที่ตรงกับ "${searchTerm}"</p>
+            <p class="small text-muted">ลองค้นหาใหม่ด้วยคำอื่น หรือคลิก "แสดงทั้งหมด" เพื่อดูข้อมูลทั้งหมด</p>
+          </div>
+        `;
+        return;
+      }
+
+      // เรียงลำดับผลลัพธ์ตามลำดับรายการ (หากมี)
+      results.sort((a, b) => {
+        const orderA = parseInt(a['ลำดับรายการ'] || a['proportion'] || a['สัดส่วนรายการ'] || '0');
+        const orderB = parseInt(b['ลำดับรายการ'] || b['proportion'] || b['สัดส่วนรายการ'] || '0');
+        return orderA - orderB;
+      });
+
+      // แสดงจำนวนผลลัพธ์
+      const resultsCount = document.createElement('div');
+      resultsCount.className = 'mb-3';
+      resultsCount.innerHTML = `<h5>พบ ${results.length} รายการที่ตรงกับการค้นหา "${searchTerm}"</h5>`;
+      searchResults.appendChild(resultsCount);
+
+      // สร้างตารางสำหรับ DataTables
+      const tableContainer = document.createElement('div');
+      tableContainer.className = 'table-responsive';
+      tableContainer.setAttribute('data-aos', 'fade-up');
+
+      let tableHTML = `
+        <table id="resultsTable" class="table table-hover table-bordered" style="width:100%">
+          <thead class="table-primary">
+            <tr>
+              <th style="width: 5%;" class="text-center">ลำดับที่</th>
+              <th style="width: 10%;" class="text-center">บ้านเลขที่</th>
+              <th style="width: 20%;" class="text-center">เลขประจำตัวประชาชน</th>
+              <th style="width: 10%;" class="text-center">คำนำหน้า</th>
+              <th style="width: 15%;" class="text-center">ชื่อ</th>
+              <th style="width: 15%;" class="text-center">นามสกุล</th>
+              <th style="width: 10%;" class="text-center">เพศ</th>
+              <th style="width: 15%;" class="text-center">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      // แสดงแต่ละผลลัพธ์ในแถวตาราง
+      results.forEach((record, index) => {
+        // ดึงข้อมูลจาก record
+        const ลำดับรายการ = record['ลำดับรายการ'] || record['proportion'] || record['สัดส่วนรายการ'] || (index + 1);
+        const เลขหมายประจำบ้าน = record['เลขหมายประจำบ้าน'] || record['houseNumber'] || 'ไม่ระบุ';
+        const เลขประจำตัวประชาชน = record['เลขประจำตัวประชาชน'] || record['id'] || 'ไม่ระบุ';
+        const ชื่อ = record['ชื่อ'] || record['name'] || 'ไม่ระบุ';
+        const namaskul = record['namaskul'] || record['นามสกุล'] || 'ไม่ระบุ';
+        const เพศ = record['เพศ'] || record['gender'] || 'ไม่ระบุ';
+        const recordKey = record.key || index;
+
+        // กำหนดคำนำหน้าตามเพศ
+        let คำนำหน้า = '-';
+        if (เพศ === 'หญิง') {
+          คำนำหน้า = 'นางสาว';
+        } else if (เพศ === 'ชาย') {
+          คำนำหน้า = 'นาย';
+        }
+
+        tableHTML += `
+          <tr data-record-key="${recordKey}">
+            <td class="text-center">${ลำดับรายการ}</td>
+            <td class="text-center">${เลขหมายประจำบ้าน}</td>
+            <td>${เลขประจำตัวประชาชน}</td>
+            <td class="text-center">${คำนำหน้า}</td>
+            <td>${ชื่อ}</td>
+            <td>${namaskul}</td>
+            <td class="text-center">${เพศ}</td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-info view-details-btn me-1" data-index="${index}" title="ดูรายละเอียด">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
+                  <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                  <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                </svg>
+              </button>
+              <button class="btn btn-sm btn-outline-primary copy-row-btn" data-index="${index}" data-record-key="${recordKey}" title="คัดลอกข้อมูล">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-clipboard" viewBox="0 0 16 16">
+                  <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                  <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+                </svg>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      tableHTML += `
+          </tbody>
+        </table>
+      `;
+
+      tableContainer.innerHTML = tableHTML;
+      searchResults.appendChild(tableContainer);
+
+      // เริ่มต้น DataTables
+      initializeDataTables(results);
+    }
+
+    // ฟังก์ชันเริ่มต้น DataTables
+    function initializeDataTables(results) {
+      // ทำลาย DataTable เดิมถ้ามี
+      if (dataTable) {
+        dataTable.destroy();
+        dataTable = null;
+      }
+
+      // เริ่มต้น DataTables
+      dataTable = $('#resultsTable').DataTable({
+        language: {
+          url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/th.json'
+        },
+        responsive: true,
+        dom: 'Bfrtip',
+        buttons: [
+          {
+            extend: 'copy',
+            text: 'คัดลอก',
+            className: 'btn btn-secondary',
+            title: 'ข้อมูลประชากรหมู่ที่ 7'
+          },
+          {
+            extend: 'excel',
+            text: 'Excel',
+            className: 'btn btn-success',
+            title: 'ข้อมูลประชากรหมู่ที่ 7'
+          },
+          {
+            extend: 'pdf',
+            text: 'PDF',
+            className: 'btn btn-danger',
+            title: 'ข้อมูลประชากรหมู่ที่ 7'
+          },
+          {
+            extend: 'print',
+            text: 'พิมพ์',
+            className: 'btn btn-info',
+            title: 'ข้อมูลประชากรหมู่ที่ 7'
+          },
+          {
+            text: 'คัดลอกข้อมูลที่เลือก',
+            className: 'btn btn-warning',
+            action: function (e, dt, node, config) {
+              copySelectedRows();
+            }
+          }
+        ],
+        pageLength: 25,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "ทั้งหมด"]],
+        order: [[0, 'asc']],
+        columnDefs: [
+          { orderable: true, targets: [0, 1, 2, 3, 4, 5, 6] },
+          { orderable: false, targets: [7] }
+        ]
+      });
+
+      // เพิ่มการเลือกแถว
+      $('#resultsTable tbody').on('click', 'tr', function () {
+        $(this).toggleClass('selected-row');
+      });
+
+      // เพิ่ม Event Listeners สำหรับปุ่มดูรายละเอียด
+      $('#resultsTable').on('click', '.view-details-btn', function () {
+        const index = $(this).data('index');
+        showRecordDetails(results[index]);
+      });
+
+      // เพิ่ม Event Listeners สำหรับปุ่มคัดลอกแต่ละแถว
+      $('#resultsTable').on('click', '.copy-row-btn', function () {
+        const index = $(this).data('index');
+        const recordKey = $(this).data('record-key');
+        copyRowData(results[index], index, recordKey);
+      });
+
+      // เริ่ม AOS animation สำหรับผลลัพธ์ใหม่
+      AOS.refresh();
+    }
+
+    // ฟังก์ชันแสดงรายละเอียดของ record
+    function showRecordDetails(record) {
+      // สร้าง HTML สำหรับแสดงรายละเอียด
+      let detailsHTML = '<div class="detail-content">';
+      
+      // ดึงข้อมูลทั้งหมดจาก record
+      for (const [key, value] of Object.entries(record)) {
+        if (key !== 'key') {
+          let displayKey = key;
+          let displayValue = value;
+          
+          // แปลงชื่อคอลัมน์เป็นภาษาไทย
+          if (key === 'ลำดับรายการ' || key === 'proportion' || key === 'สัดส่วนรายการ') {
+            displayKey = 'ลำดับรายการ';
+          } else if (key === 'เลขหมายประจำบ้าน' || key === 'houseNumber') {
+            displayKey = 'บ้านเลขที่';
+          } else if (key === 'เลขประจำตัวประชาชน' || key === 'id') {
+            displayKey = 'เลขประจำตัวประชาชน';
+          } else if (key === 'ชื่อ' || key === 'name') {
+            displayKey = 'ชื่อ';
+          } else if (key === 'namaskul' || key === 'นามสกุล') {
+            displayKey = 'นามสกุล';
+          } else if (key === 'เพศ' || key === 'gender') {
+            displayKey = 'เพศ';
+          }
+          
+          detailsHTML += `
+            <div class="detail-item row">
+              <div class="col-md-4 detail-label">${displayKey}:</div>
+              <div class="col-md-8 detail-value">${displayValue || 'ไม่ระบุ'}</div>
+            </div>
+          `;
+        }
+      }
+      
+      detailsHTML += '</div>';
+      
+      // แสดงใน modal
+      detailModalBody.innerHTML = detailsHTML;
+      detailModal.show();
+    }
+
+    // ฟังก์ชันคัดลอกข้อมูลแถวเดียว
+    function copyRowData(record, index, recordKey) {
+      // ดึงข้อมูลจาก record
+      const ลำดับรายการ = record['ลำดับรายการ'] || record['proportion'] || record['สัดส่วนรายการ'] || (parseInt(index) + 1);
+      const เลขหมายประจำบ้าน = record['เลขหมายประจำบ้าน'] || record['houseNumber'] || 'ไม่ระบุ';
+      const เลขประจำตัวประชาชน = record['เลขประจำตัวประชาชน'] || record['id'] || 'ไม่ระบุ';
+      const ชื่อ = record['ชื่อ'] || record['name'] || '';
+      const namaskul = record['namaskul'] || record['นามสกุล'] || '';
+      const เพศ = record['เพศ'] || record['gender'] || 'ไม่ระบุ';
+
+      // กำหนดคำนำหน้าตามเพศ
+      let คำนำหน้า = '-';
+      if (เพศ === 'หญิง') {
+        คำนำหน้า = 'นางสาว';
+      } else if (เพศ === 'ชาย') {
+        คำนำหน้า = 'นาย';
+      }
+
+      // จัดรูปแบบข้อมูลสำหรับคัดลอก
+      const dataToCopy = `ลำดับรายการ: ${ลำดับรายการ}
+บ้านเลขที่: ${เลขหมายประจำบ้าน}
+เลขประจำตัวประชาชน: ${เลขประจำตัวประชาชน}
+คำนำหน้า: ${คำนำหน้า}
+ชื่อ: ${ชื่อ}
+นามสกุล: ${namaskul}
+เพศ: ${เพศ}`;
+
+      // คัดลอกไปที่คลิปบอร์ด
+      navigator.clipboard.writeText(dataToCopy)
+        .then(() => {
+          // แสดงการแจ้งเตือนสำเร็จ
+          Swal.fire({
+            icon: 'success',
+            title: 'คัดลอกข้อมูลสำเร็จ!',
+            text: 'ข้อมูลถูกคัดลอกไปยังคลิปบอร์ดแล้ว',
+            timer: 1500,
+            showConfirmButton: false
+          });
+        })
+        .catch(err => {
+          console.error('Failed to copy: ', err);
+          Swal.fire({
+            icon: 'error',
+            title: 'คัดลอกข้อมูลไม่สำเร็จ',
+            text: 'กรุณาลองอีกครั้ง',
+          });
+        });
+    }
+
+    // ฟังก์ชันคัดลอกแถวที่เลือก
+    function copySelectedRows() {
+      const selectedRows = $('#resultsTable tbody tr.selected-row');
+      
+      if (selectedRows.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'กรุณาเลือกข้อมูล',
+          text: 'โปรดเลือกแถวข้อมูลที่ต้องการคัดลอก',
+        });
+        return;
+      }
+
+      let copiedData = `ข้อมูลประชากรหมู่ที่ 7 (${selectedRows.length} รายการ)\n`;
+      copiedData += '='.repeat(50) + '\n\n';
+
+      selectedRows.each(function(index) {
+        const row = $(this);
+        const ลำดับรายการ = row.find('td:eq(0)').text();
+        const เลขหมายประจำบ้าน = row.find('td:eq(1)').text();
+        const เลขประจำตัวประชาชน = row.find('td:eq(2)').text();
+        const คำนำหน้า = row.find('td:eq(3)').text();
+        const ชื่อ = row.find('td:eq(4)').text();
+        const นามสกุล = row.find('td:eq(5)').text();
+        const เพศ = row.find('td:eq(6)').text();
+
+        copiedData += `รายการที่ ${index + 1}:\n`;
+        copiedData += `  ลำดับที่: ${ลำดับรายการ}\n`;
+        copiedData += `  บ้านเลขที่: ${เลขหมายประจำบ้าน}\n`;
+        copiedData += `  เลขประจำตัวประชาชน: ${เลขประจำตัวประชาชน}\n`;
+        copiedData += `  คำนำหน้า: ${คำนำหน้า}\n`;
+        copiedData += `  ชื่อ: ${ชื่อ}\n`;
+        copiedData += `  นามสกุล: ${นามสกุล}\n`;
+        copiedData += `  เพศ: ${เพศ}\n`;
+        copiedData += '-'.repeat(40) + '\n';
+      });
+
+      // คัดลอกไปที่คลิปบอร์ด
+      navigator.clipboard.writeText(copiedData)
+        .then(() => {
+          Swal.fire({
+            icon: 'success',
+            title: 'คัดลอกสำเร็จ!',
+            html: `<div class="text-start">
+              <p>คัดลอกข้อมูล ${selectedRows.length} รายการไปยังคลิปบอร์ดแล้ว</p>
+              <p class="small text-muted">สามารถวางข้อมูลในเอกสารต่างๆ ได้</p>
+            </div>`,
+            timer: 2000,
+            showConfirmButton: false
+          });
+        })
+        .catch(err => {
+          console.error('Failed to copy: ', err);
+          Swal.fire({
+            icon: 'error',
+            title: 'คัดลอกไม่สำเร็จ',
+            text: 'กรุณาลองอีกครั้ง',
+          });
+        });
+    }
+  </script>
+</body>
+
+</html>

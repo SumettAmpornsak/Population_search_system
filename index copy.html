@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบค้นหารายชื่อประชากรหมู่ที่ 7</title>
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- AOS Animation CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
+
+  <!-- SweetAlert2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary-color: #6366f1;
+      --primary-dark: #4f46e5;
+      --primary-light: #818cf8;
+      --secondary-color: #8b5cf6;
+      --success-color: #10b981;
+      --danger-color: #ef4444;
+      --warning-color: #f59e0b;
+      --info-color: #06b6d4;
+      --dark-color: #1f2937;
+      --light-color: #f9fafb;
+      --border-radius: 16px;
+      --border-radius-sm: 12px;
+      --box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --box-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Kanit', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: var(--dark-color);
+    }
+
+    /* Navbar */
+    .navbar {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--box-shadow);
+      padding: 1rem 0;
+    }
+
+    .navbar-brand {
+      font-weight: 600;
+      font-size: 1.25rem;
+      color: var(--primary-color) !important;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .user-profile-nav {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: var(--light-color);
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid var(--primary-color);
+    }
+
+    .logout-btn {
+      background: var(--danger-color);
+      color: white;
+      border: none;
+      padding: 0.5rem 1.25rem;
+      border-radius: 50px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .logout-btn:hover {
+      background: #dc2626;
+      transform: translateY(-2px);
+      box-shadow: var(--box-shadow);
+    }
+
+    /* Login Container */
+    .login-container {
+      max-width: 480px;
+      margin: 4rem auto;
+      padding: 3rem;
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow-lg);
+    }
+
+    .login-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1.5rem;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .google-login-btn {
+      width: 100%;
+      background: white;
+      color: var(--dark-color);
+      border: 2px solid #e5e7eb;
+      padding: 1rem 1.5rem;
+      border-radius: var(--border-radius-sm);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      transition: all 0.3s ease;
+      font-size: 1rem;
+    }
+
+    .google-login-btn:hover {
+      border-color: var(--primary-color);
+      background: var(--light-color);
+      transform: translateY(-2px);
+      box-shadow: var(--box-shadow);
+    }
+
+    /* Search Container */
+    .search-container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .welcome-card {
+      background: white;
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--box-shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .welcome-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--border-radius-sm);
+      padding: 1.5rem;
+      box-shadow: var(--box-shadow);
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--box-shadow-lg);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--dark-color);
+      margin: 0;
+    }
+
+    .stat-label {
+      color: #6b7280;
+      font-size: 0.875rem;
+      font-weight: 400;
+    }
+
+    /* Search Box */
+    .search-box-wrapper {
+      background: white;
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      box-shadow: var(--box-shadow);
+      margin-bottom: 2rem;
+    }
+
+    .search-input-group {
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+
+    .search-icon-wrapper {
+      position: absolute;
+      left: 1.25rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      z-index: 1;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 1rem 1rem 1rem 3.5rem;
+      border: 2px solid #e5e7eb;
+      border-radius: var(--border-radius-sm);
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+
+    .search-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-modern {
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+      color: white;
+      border: none;
+      padding: 0.75rem 1.75rem;
+      border-radius: var(--border-radius-sm);
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary-modern:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--box-shadow);
+    }
+
+    .btn-outline-modern {
+      background: white;
+      color: var(--dark-color);
+      border: 2px solid #e5e7eb;
+      padding: 0.75rem 1.75rem;
+      border-radius: var(--border-radius-sm);
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-outline-modern:hover {
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+      background: rgba(99, 102, 241, 0.05);
+    }
+
+    /* Results */
+    .results-container {
+      background: white;
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      box-shadow: var(--box-shadow);
+      margin-bottom: 2rem;
+    }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #f3f4f6;
+    }
+
+    .table-modern {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .table-modern thead th {
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+      color: white;
+      padding: 1rem;
+      font-weight: 600;
+      text-align: center;
+      border: none;
+    }
+
+    .table-modern thead th:first-child {
+      border-radius: var(--border-radius-sm) 0 0 0;
+    }
+
+    .table-modern thead th:last-child {
+      border-radius: 0 var(--border-radius-sm) 0 0;
+    }
+
+    .table-modern tbody td {
+      padding: 1rem;
+      border-bottom: 1px solid #f3f4f6;
+      text-align: center;
+    }
+
+    .table-modern tbody tr {
+      transition: all 0.2s ease;
+    }
+
+    .table-modern tbody tr:hover {
+      background: #f9fafb;
+      transform: scale(1.01);
+    }
+
+    .copy-btn {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .copy-btn:hover {
+      background: var(--primary-dark);
+      transform: scale(1.05);
+    }
+
+    /* Log Section */
+    .log-card {
+      background: white;
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      box-shadow: var(--box-shadow);
+    }
+
+    .log-item {
+      padding: 1rem;
+      border-radius: var(--border-radius-sm);
+      margin-bottom: 0.75rem;
+      background: #f9fafb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+
+    .log-item:hover {
+      background: #f3f4f6;
+      transform: translateX(4px);
+    }
+
+    .log-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 50px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .log-badge.login {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .log-badge.logout {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    /* Loading */
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .loading-overlay.active {
+      display: flex;
+    }
+
+    .loading-spinner {
+      background: white;
+      padding: 2rem 3rem;
+      border-radius: var(--border-radius);
+      text-align: center;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #f3f4f6;
+      border-top-color: var(--primary-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+    }
+
+    .empty-icon {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 1.5rem;
+      background: linear-gradient(135deg, #e5e7eb, #d1d5db);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .search-container {
+        padding: 0 1rem;
+      }
+
+      .login-container {
+        margin: 2rem 1rem;
+        padding: 2rem 1.5rem;
+      }
+
+      .welcome-card,
+      .search-box-wrapper,
+      .results-container,
+      .log-card {
+        padding: 1.5rem;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .search-actions {
+        flex-direction: column;
+      }
+
+      .search-actions button {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .table-modern {
+        font-size: 0.875rem;
+      }
+
+      .table-modern thead th,
+      .table-modern tbody td {
+        padding: 0.75rem 0.5rem;
+      }
+
+      .user-profile-nav {
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0.75rem;
+      }
+    }
+
+    /* Modal */
+    .modal-content {
+      border-radius: var(--border-radius);
+      border: none;
+    }
+
+    .modal-header {
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+      color: white;
+      border-radius: var(--border-radius) var(--border-radius) 0 0;
+      border: none;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      color: white;
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+      <p class="mb-0 fw-medium">กำลังโหลด...</p>
+    </div>
+  </div>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container">
+      <a class="navbar-brand" href="#">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        ระบบค้นหารายชื่อประชากรหมู่ที่ 7
+      </a>
+      <div id="userProfile" class="d-none">
+        <div class="user-profile-nav">
+          <img id="userPhoto" class="user-avatar" src="" alt="User">
+          <span id="userName" class="fw-medium d-none d-md-inline"></span>
+          <button id="logoutBtn" class="logout-btn">ออกจากระบบ</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Login Section -->
+  <div id="loginSection" class="container">
+    <div class="login-container" data-aos="fade-up">
+      <div class="login-icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="white" stroke-width="2"/>
+          <path d="M12 14C8.13401 14 5 17.134 5 21H19C19 17.134 15.866 14 12 14Z" stroke="white" stroke-width="2"/>
+        </svg>
+      </div>
+      
+      <div class="text-center mb-4">
+        <h2 class="fw-bold mb-2">ยินดีต้อนรับ</h2>
+        <p class="text-muted mb-0">เข้าสู่ระบบเพื่อค้นหาข้อมูลประชากร</p>
+      </div>
+
+      <button id="googleLoginBtn" class="google-login-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        เข้าสู่ระบบด้วย Google
+      </button>
+
+      <div class="text-center mt-4">
+        <small class="text-muted">ระบบนี้ใช้สำหรับค้นหาข้อมูลเท่านั้น</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Section -->
+  <div id="searchSection" class="container search-container d-none">
+    <!-- Welcome Card -->
+    <div class="welcome-card" data-aos="fade-up">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+          <h4 class="fw-bold mb-1">สวัสดี, <span id="welcomeMessage"></span></h4>
+          <p class="text-muted mb-0">ค้นหาข้อมูลประชากรได้ที่นี่</p>
+        </div>
+        <img id="userPhotoLarge" class="rounded-circle" width="60" height="60" src="" alt="User">
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div id="statsGrid" class="stats-grid d-none" data-aos="fade-up">
+      <div class="stat-card">
+        <div class="stat-icon" style="background: #dbeafe;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M9 11H15M9 15H15M17 21H7C5.89543 21 5 20.1046 5 19V5C5 3.89543 5.89543 3 7 3H12.5858C12.851 3 13.1054 3.10536 13.2929 3.29289L18.7071 8.70711C18.8946 8.89464 19 9.149 19 9.41421V19C19 20.1046 18.1046 21 17 21Z" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3 class="stat-value" id="totalRecords">0</h3>
+        <p class="stat-label">รายการทั้งหมด</p>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon" style="background: #dcfce7;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3 class="stat-value" id="searchResultsCount">0</h3>
+        <p class="stat-label">ผลการค้นหา</p>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon" style="background: #fef3c7;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M12 8V12L15 15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3 class="stat-value" id="lastUpdated">-</h3>
+        <p class="stat-label">อัปเดตล่าสุด</p>
+      </div>
+    </div>
+
+    <!-- Search Box -->
+    <div class="search-box-wrapper" data-aos="fade-up">
+      <div class="search-input-group">
+        <div class="search-icon-wrapper">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <input type="text" id="searchInput" class="search-input" placeholder="ค้นหาด้วยชื่อ นามสกุล หรือเลขประจำตัวประชาชน...">
+      </div>
+
+      <div class="search-actions">
+        <button id="searchBtn" class="btn-primary-modern">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          ค้นหา
+        </button>
+        <button id="showAllBtn" class="btn-outline-modern">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          แสดงทั้งหมด
+        </button>
+        <button id="clearBtn" class="btn-outline-modern">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M6 18L18 6M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          ล้าง
+        </button>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="searchResults"></div>
+
+    <!-- Logs -->
+    <div class="log-card" data-aos="fade-up">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">บันทึกการเข้าใช้งาน</h5>
+        <button id="viewAllLogsBtn" class="btn-outline-modern" style="padding: 0.5rem 1rem;">ดูทั้งหมด</button>
+      </div>
+      <div id="recentLogs">
+        <div class="text-center py-4">
+          <div class="spinner"></div>
+          <p class="text-muted mt-2 mb-0">กำลังโหลดบันทึก...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <p class="mb-1 fw-medium">ระบบค้นหารายชื่อประชากรหมู่ที่ 7</p>
+    <p class="mb-0 opacity-75" style="font-size: 0.875rem;">© 2024 - ใช้สำหรับค้นหาข้อมูลเท่านั้น</p>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="allLogsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">บันทึกการเข้าใช้งานทั้งหมด</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="allLogsContent"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- AOS JS -->
+  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+
+  <!-- SweetAlert2 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDDOlnwzmujOPOlXUbWYrgK5YjnqI7hyrI",
+      authDomain: "list-of-eligible-voters.firebaseapp.com",
+      databaseURL: "https://list-of-eligible-voters-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "list-of-eligible-voters",
+      storageBucket: "list-of-eligible-voters.firebasestorage.app",
+      messagingSenderId: "307610806047",
+      appId: "1:307610806047:web:d53aeafa11d62dd2ef722a"
+    };
+
+    // Initialize AOS
+    document.addEventListener('DOMContentLoaded', function () {
+      AOS.init({
+        duration: 600,
+        once: true,
+        offset: 50
+      });
+    });
+
+    // Initialize Firebase
+    let firebaseApp, auth, database;
+
+    try {
+      firebaseApp = firebase.initializeApp(firebaseConfig);
+      auth = firebase.auth();
+      database = firebase.database();
+      console.log("Firebase initialized successfully");
+    } catch (error) {
+      console.error("Firebase initialization error:", error);
+      showError("ไม่สามารถเชื่อมต่อกับระบบได้", error.message);
+    }
+
+    // DOM Elements
+    const loginSection = document.getElementById('loginSection');
+    const searchSection = document.getElementById('searchSection');
+    const googleLoginBtn = document.getElementById('googleLoginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const userProfile = document.getElementById('userProfile');
+    const userName = document.getElementById('userName');
+    const userPhoto = document.getElementById('userPhoto');
+    const userPhotoLarge = document.getElementById('userPhotoLarge');
+    const welcomeMessage = document.getElementById('welcomeMessage');
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const showAllBtn = document.getElementById('showAllBtn');
+    const searchResults = document.getElementById('searchResults');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const statsGrid = document.getElementById('statsGrid');
+    const totalRecords = document.getElementById('totalRecords');
+    const lastUpdated = document.getElementById('lastUpdated');
+    const searchResultsCount = document.getElementById('searchResultsCount');
+    const recentLogs = document.getElementById('recentLogs');
+    const viewAllLogsBtn = document.getElementById('viewAllLogsBtn');
+    const allLogsModal = new bootstrap.Modal(document.getElementById('allLogsModal'));
+    const allLogsContent = document.getElementById('allLogsContent');
+
+    // Auth State Observer
+    if (auth) {
+      auth.onAuthStateChanged((user) => {
+        if (user) {
+          showSearchSection(user);
+          loadDatabaseStats();
+          logUserAction(user, 'login');
+          loadRecentLogs();
+          setupLogsListener();
+        } else {
+          showLoginSection();
+        }
+      });
+    }
+
+    // Show Login Section
+    function showLoginSection() {
+      loginSection.classList.remove('d-none');
+      searchSection.classList.add('d-none');
+      userProfile.classList.add('d-none');
+    }
+
+    // Show Search Section
+    function showSearchSection(user) {
+      loginSection.classList.add('d-none');
+      searchSection.classList.remove('d-none');
+      userProfile.classList.remove('d-none');
+
+      userName.textContent = user.displayName || user.email;
+      welcomeMessage.textContent = user.displayName || user.email;
+
+      if (user.photoURL) {
+        userPhoto.src = user.photoURL;
+        userPhotoLarge.src = user.photoURL;
+      } else {
+        const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.email)}&background=6366f1&color=fff`;
+        userPhoto.src = avatarUrl;
+        userPhotoLarge.src = avatarUrl;
+      }
+
+      searchInput.value = '';
+      searchResults.innerHTML = '';
+    }
+
+    // Load Database Stats
+    function loadDatabaseStats() {
+      if (!database) return;
+
+      database.ref().once('value')
+        .then((snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            const recordCount = Object.keys(data).length;
+            totalRecords.textContent = recordCount.toLocaleString('th-TH');
+            
+            const now = new Date();
+            lastUpdated.textContent = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+            
+            statsGrid.classList.remove('d-none');
+          }
+        })
+        .catch((error) => {
+          console.error('Error loading database stats:', error);
+        });
+    }
+
+    // Log User Action
+    function logUserAction(user, action) {
+      if (!database) return;
+
+      const timestamp = new Date().getTime();
+      const date = new Date();
+
+      const logData = {
+        userId: user.uid,
+        userName: user.displayName || user.email,
+        userEmail: user.email,
+        action: action,
+        timestamp: timestamp,
+        date: date.toLocaleDateString('th-TH'),
+        time: date.toLocaleTimeString('th-TH'),
+        datetime: date.toLocaleString('th-TH')
+      };
+
+      database.ref('system_logs').push(logData)
+        .then(() => {
+          console.log(`✅ Log recorded: ${logData.userName} ${action}`);
+        })
+        .catch((error) => {
+          console.error("❌ Error recording log:", error);
+        });
+    }
+
+    // Setup Logs Listener
+    function setupLogsListener() {
+      if (!database) return;
+
+      if (window.logsListener) {
+        database.ref('system_logs').off('value', window.logsListener);
+      }
+
+      window.logsListener = database.ref('system_logs')
+        .orderByChild('timestamp')
+        .limitToLast(5)
+        .on('value', (snapshot) => {
+          const logs = [];
+          snapshot.forEach((childSnapshot) => {
+            const log = childSnapshot.val();
+            log.id = childSnapshot.key;
+            logs.push(log);
+          });
+
+          logs.sort((a, b) => b.timestamp - a.timestamp);
+          displayRecentLogs(logs);
+        });
+    }
+
+    // Load Recent Logs
+    function loadRecentLogs() {
+      if (!database) {
+        recentLogs.innerHTML = '<div class="text-center text-muted py-3">ไม่สามารถโหลดบันทึกได้</div>';
+        return;
+      }
+
+      database.ref('system_logs')
+        .orderByChild('timestamp')
+        .limitToLast(5)
+        .once('value')
+        .then((snapshot) => {
+          const logs = [];
+          snapshot.forEach((childSnapshot) => {
+            const log = childSnapshot.val();
+            log.id = childSnapshot.key;
+            logs.push(log);
+          });
+
+          logs.sort((a, b) => b.timestamp - a.timestamp);
+          displayRecentLogs(logs);
+        })
+        .catch((error) => {
+          console.error("Error loading logs:", error);
+          recentLogs.innerHTML = '<div class="text-center text-muted py-3">ไม่สามารถโหลดบันทึกได้</div>';
+        });
+    }
+
+    // Display Recent Logs
+    function displayRecentLogs(logs) {
+      if (!logs || logs.length === 0) {
+        recentLogs.innerHTML = '<div class="text-center text-muted py-3">ไม่มีบันทึกการใช้งาน</div>';
+        return;
+      }
+
+      let logsHTML = '';
+
+      logs.forEach((log) => {
+        const actionClass = log.action === 'login' ? 'login' : 'logout';
+        const actionText = log.action === 'login' ? 'เข้าสู่ระบบ' : 'ออกจากระบบ';
+        const displayTime = log.datetime || new Date(log.timestamp).toLocaleString('th-TH');
+
+        logsHTML += `
+          <div class="log-item">
+            <div>
+              <div class="fw-medium">${log.userName}</div>
+              <div class="small text-muted">${displayTime}</div>
+            </div>
+            <span class="log-badge ${actionClass}">${actionText}</span>
+          </div>
+        `;
+      });
+
+      recentLogs.innerHTML = logsHTML;
+    }
+
+    // Load All Logs
+    function loadAllLogs() {
+      if (!database) {
+        allLogsContent.innerHTML = '<div class="text-center text-muted py-5">ไม่สามารถโหลดบันทึกได้</div>';
+        return;
+      }
+
+      allLogsContent.innerHTML = `
+        <div class="text-center py-3">
+          <div class="spinner"></div>
+          <p class="mt-2">กำลังโหลดบันทึกทั้งหมด...</p>
+        </div>
+      `;
+
+      database.ref('system_logs')
+        .orderByChild('timestamp')
+        .once('value')
+        .then((snapshot) => {
+          const logs = [];
+          snapshot.forEach((childSnapshot) => {
+            const log = childSnapshot.val();
+            log.id = childSnapshot.key;
+            logs.push(log);
+          });
+
+          logs.sort((a, b) => b.timestamp - a.timestamp);
+          displayAllLogs(logs);
+        })
+        .catch((error) => {
+          console.error("Error loading all logs:", error);
+          allLogsContent.innerHTML = '<div class="text-center text-muted py-5">ไม่สามารถโหลดบันทึกได้</div>';
+        });
+    }
+
+    // Display All Logs
+    function displayAllLogs(logs) {
+      if (!logs || logs.length === 0) {
+        allLogsContent.innerHTML = '<div class="text-center text-muted py-5">ไม่มีบันทึกการใช้งาน</div>';
+        return;
+      }
+
+      let logsHTML = '<div class="table-responsive"><table class="table-modern"><thead><tr><th>วันที่และเวลา</th><th>ผู้ใช้งาน</th><th>การกระทำ</th><th>อีเมล</th></tr></thead><tbody>';
+
+      logs.forEach((log) => {
+        const actionClass = log.action === 'login' ? 'login' : 'logout';
+        const actionText = log.action === 'login' ? 'เข้าสู่ระบบ' : 'ออกจากระบบ';
+        const displayTime = log.datetime || new Date(log.timestamp).toLocaleString('th-TH');
+
+        logsHTML += `
+          <tr>
+            <td>${displayTime}</td>
+            <td><strong>${log.userName}</strong></td>
+            <td><span class="log-badge ${actionClass}">${actionText}</span></td>
+            <td class="small">${log.userEmail}</td>
+          </tr>
+        `;
+      });
+
+      logsHTML += `</tbody></table></div><div class="mt-3 text-muted small text-center">แสดงทั้งหมด ${logs.length} รายการ</div>`;
+      allLogsContent.innerHTML = logsHTML;
+    }
+
+    // Google Login
+    googleLoginBtn.addEventListener('click', () => {
+      if (!auth) {
+        showError('ระบบผิดพลาด', 'ไม่สามารถเชื่อมต่อกับระบบได้');
+        return;
+      }
+
+      const provider = new firebase.auth.GoogleAuthProvider();
+
+      auth.signInWithPopup(provider)
+        .then((result) => {
+          showSuccess('ล็อกอินสำเร็จ', 'ยินดีต้อนรับเข้าสู่ระบบ');
+        })
+        .catch((error) => {
+          console.error("Google login error:", error);
+          showError('เกิดข้อผิดพลาด', 'ไม่สามารถล็อกอินได้ กรุณาลองอีกครั้ง');
+        });
+    });
+
+    // Logout
+    logoutBtn.addEventListener('click', () => {
+      Swal.fire({
+        title: 'ออกจากระบบ?',
+        text: 'คุณต้องการออกจากระบบใช่หรือไม่',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'ออกจากระบบ',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          const user = auth.currentUser;
+          if (user) {
+            logUserAction(user, 'logout');
+          }
+
+          auth.signOut()
+            .then(() => {
+              showSuccess('ออกจากระบบสำเร็จ', '');
+            })
+            .catch((error) => {
+              console.error("Logout error:", error);
+            });
+        }
+      });
+    });
+
+    // View All Logs
+    viewAllLogsBtn.addEventListener('click', () => {
+      loadAllLogs();
+      allLogsModal.show();
+    });
+
+    // Search
+    searchBtn.addEventListener('click', performSearch);
+
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        performSearch();
+      }
+    });
+
+    // Clear
+    clearBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      searchResults.innerHTML = '';
+      searchResultsCount.textContent = '0';
+    });
+
+    // Show All
+    showAllBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      showAllData();
+    });
+
+    // Perform Search
+    function performSearch() {
+      const searchTerm = searchInput.value.trim();
+
+      if (!searchTerm) {
+        showWarning('กรุณากรอกคำค้นหา', 'โปรดป้อนชื่อ นามสกุล หรือเลขประจำตัวประชาชน');
+        return;
+      }
+
+      showLoading();
+
+      database.ref().once('value')
+        .then((snapshot) => {
+          hideLoading();
+
+          const data = snapshot.val();
+          const results = [];
+
+          if (!data) {
+            displayNoResults('ไม่พบข้อมูลในฐานข้อมูล');
+            return;
+          }
+
+          const searchLower = searchTerm.toLowerCase();
+
+          Object.keys(data).forEach((key) => {
+            const record = data[key];
+
+            if (record && typeof record === 'object') {
+              let found = false;
+
+              for (const field in record) {
+                if (record.hasOwnProperty(field)) {
+                  const value = record[field];
+                  if (typeof value === 'string') {
+                    if (value.toLowerCase().includes(searchLower) || value.includes(searchTerm)) {
+                      found = true;
+                      break;
+                    }
+                  }
+                }
+              }
+
+              if (found) {
+                results.push({ key: key, ...record });
+              }
+            }
+          });
+
+          searchResultsCount.textContent = results.length;
+          displaySearchResults(results, searchTerm);
+        })
+        .catch((error) => {
+          hideLoading();
+          console.error("Search error:", error);
+          showError('เกิดข้อผิดพลาด', 'ไม่สามารถค้นหาข้อมูลได้');
+        });
+    }
+
+    // Show All Data
+    function showAllData() {
+      showLoading();
+
+      database.ref().once('value')
+        .then((snapshot) => {
+          hideLoading();
+
+          const data = snapshot.val();
+          const results = [];
+
+          if (!data) {
+            displayNoResults('ไม่พบข้อมูลในฐานข้อมูล');
+            return;
+          }
+
+          Object.keys(data).forEach((key) => {
+            const record = data[key];
+            if (record && typeof record === 'object') {
+              results.push({ key: key, ...record });
+            }
+          });
+
+          searchResultsCount.textContent = results.length;
+          displaySearchResults(results, 'ทั้งหมด');
+        })
+        .catch((error) => {
+          hideLoading();
+          console.error("Show all data error:", error);
+          showError('เกิดข้อผิดพลาด', 'ไม่สามารถดึงข้อมูลได้');
+        });
+    }
+
+    // Display Search Results
+    function displaySearchResults(results, searchTerm) {
+      searchResults.innerHTML = '';
+
+      if (results.length === 0) {
+        displayNoResults(`ไม่พบข้อมูลที่ตรงกับ "${searchTerm}"`);
+        return;
+      }
+
+      results.sort((a, b) => {
+        const orderA = parseInt(a['ลำดับรายการ'] || a['proportion'] || '0');
+        const orderB = parseInt(b['ลำดับรายการ'] || b['proportion'] || '0');
+        return orderA - orderB;
+      });
+
+      let html = `
+        <div class="results-container" data-aos="fade-up">
+          <div class="results-header">
+            <h5 class="fw-bold mb-0">พบ ${results.length} รายการ</h5>
+            <button class="btn-primary-modern" onclick="copyAllData()" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              คัดลอกทั้งหมด
+            </button>
+          </div>
+          <div class="table-responsive">
+            <table class="table-modern">
+              <thead>
+                <tr>
+                  <th style="width: 8%;">ลำดับ</th>
+                  <th style="width: 10%;">บ้านเลขที่</th>
+                  <th style="width: 20%;">เลขประจำตัวประชาชน</th>
+                  <th style="width: 10%;">คำนำหน้า</th>
+                  <th style="width: 17%;">ชื่อ</th>
+                  <th style="width: 17%;">นามสกุล</th>
+                  <th style="width: 10%;">เพศ</th>
+                  <th style="width: 8%;">คัดลอก</th>
+                </tr>
+              </thead>
+              <tbody>
+      `;
+
+      window.currentResults = results;
+
+      results.forEach((record, index) => {
+        const ลำดับรายการ = record['ลำดับรายการ'] || record['proportion'] || (index + 1);
+        const เลขหมายประจำบ้าน = record['เลขหมายประจำบ้าน'] || record['houseNumber'] || '-';
+        const เลขประจำตัวประชาชน = record['เลขประจำตัวประชาชน'] || record['id'] || '-';
+        const ชื่อ = record['ชื่อ'] || record['name'] || '';
+        const namaskul = record['namaskul'] || record['นามสกุล'] || '';
+        const เพศ = record['เพศ'] || record['gender'] || '-';
+        
+        let คำนำหน้า = '-';
+        if (เพศ === 'หญิง') คำนำหน้า = 'นางสาว';
+        else if (เพศ === 'ชาย') คำนำหน้า = 'นาย';
+
+        html += `
+          <tr id="row-${index}">
+            <td>${ลำดับรายการ}</td>
+            <td>${เลขหมายประจำบ้าน}</td>
+            <td>${เลขประจำตัวประชาชน}</td>
+            <td>${คำนำหน้า}</td>
+            <td>${ชื่อ}</td>
+            <td>${namaskul}</td>
+            <td>${เพศ}</td>
+            <td>
+              <button class="copy-btn" onclick="copyRowData(${index})">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += '</tbody></table></div></div>';
+      searchResults.innerHTML = html;
+      AOS.refresh();
+    }
+
+    // Display No Results
+    function displayNoResults(message) {
+      searchResults.innerHTML = `
+        <div class="results-container" data-aos="fade-up">
+          <div class="empty-state">
+            <div class="empty-icon">
+              <svg width="50" height="50" viewBox="0 0 24 24" fill="none">
+                <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h4 class="fw-bold mb-2">${message}</h4>
+            <p class="text-muted">ลองค้นหาใหม่ด้วยคำอื่น หรือคลิก "แสดงทั้งหมด"</p>
+          </div>
+        </div>
+      `;
+    }
+
+    // Copy Row Data
+    window.copyRowData = function(index) {
+      const record = window.currentResults[index];
+      
+      const ลำดับรายการ = record['ลำดับรายการ'] || record['proportion'] || (index + 1);
+      const เลขหมายประจำบ้าน = record['เลขหมายประจำบ้าน'] || record['houseNumber'] || '-';
+      const เลขประจำตัวประชาชน = record['เลขประจำตัวประชาชน'] || record['id'] || '-';
+      const ชื่อ = record['ชื่อ'] || record['name'] || '';
+      const namaskul = record['namaskul'] || record['นามสกุล'] || '';
+      const เพศ = record['เพศ'] || record['gender'] || '-';
+      
+      let คำนำหน้า = '-';
+      if (เพศ === 'หญิง') คำนำหน้า = 'นางสาว';
+      else if (เพศ === 'ชาย') คำนำหน้า = 'นาย';
+
+      const dataToCopy = `ลำดับรายการ: ${ลำดับรายการ}
+หมายเลขประจำบ้าน: ${เลขหมายประจำบ้าน}
+เลขประจำตัวประชาชน: ${เลขประจำตัวประชาชน}
+คำนำหน้า: ${คำนำหน้า}
+ชื่อ: ${ชื่อ}
+นามสกุล: ${namaskul}
+เพศ: ${เพศ}`;
+
+      navigator.clipboard.writeText(dataToCopy)
+        .then(() => {
+          const row = document.getElementById(`row-${index}`);
+          if (row) {
+            row.style.background = '#d1fae5';
+            setTimeout(() => { row.style.background = ''; }, 1000);
+          }
+          showSuccess('คัดลอกสำเร็จ!', '');
+        })
+        .catch(() => {
+          showError('คัดลอกไม่สำเร็จ', 'กรุณาลองอีกครั้ง');
+        });
+    };
+
+    // Copy All Data
+    window.copyAllData = function() {
+      const results = window.currentResults;
+      if (!results || results.length === 0) {
+        showWarning('ไม่มีข้อมูล', 'ไม่พบข้อมูลสำหรับคัดลอก');
+        return;
+      }
+
+      let allData = `ผลการค้นหา: ${results.length} รายการ\n${'='.repeat(50)}\n\n`;
+
+      results.forEach((record, index) => {
+        const ลำดับรายการ = record['ลำดับรายการ'] || record['proportion'] || (index + 1);
+        const เลขหมายประจำบ้าน = record['เลขหมายประจำบ้าน'] || record['houseNumber'] || '-';
+        const เลขประจำตัวประชาชน = record['เลขประจำตัวประชาชน'] || record['id'] || '-';
+        const ชื่อ = record['ชื่อ'] || record['name'] || '';
+        const namaskul = record['namaskul'] || record['นามสกุล'] || '';
+        const เพศ = record['เพศ'] || record['gender'] || '-';
+        
+        let คำนำหน้า = '-';
+        if (เพศ === 'หญิง') คำนำหน้า = 'นางสาว';
+        else if (เพศ === 'ชาย') คำนำหน้า = 'นาย';
+
+        allData += `รายการที่ ${index + 1}:\n`;
+        allData += `  ลำดับรายการ: ${ลำดับรายการ}\n`;
+        allData += `  หมายเลขประจำบ้าน: ${เลขหมายประจำบ้าน}\n`;
+        allData += `  เลขประจำตัวประชาชน: ${เลขประจำตัวประชาชน}\n`;
+        allData += `  คำนำหน้า: ${คำนำหน้า}\n`;
+        allData += `  ชื่อ: ${ชื่อ}\n`;
+        allData += `  นามสกุล: ${namaskul}\n`;
+        allData += `  เพศ: ${เพศ}\n`;
+        allData += `${'-'.repeat(40)}\n`;
+      });
+
+      navigator.clipboard.writeText(allData)
+        .then(() => {
+          showSuccess('คัดลอกทั้งหมดสำเร็จ!', `คัดลอกข้อมูล ${results.length} รายการแล้ว`);
+        })
+        .catch(() => {
+          showError('คัดลอกไม่สำเร็จ', 'กรุณาลองอีกครั้ง');
+        });
+    };
+
+    // Helper Functions
+    function showLoading() {
+      loadingOverlay.classList.add('active');
+    }
+
+    function hideLoading() {
+      loadingOverlay.classList.remove('active');
+    }
+
+    function showSuccess(title, text) {
+      Swal.fire({
+        icon: 'success',
+        title: title,
+        text: text,
+        timer: 1500,
+        showConfirmButton: false
+      });
+    }
+
+    function showError(title, text) {
+      Swal.fire({
+        icon: 'error',
+        title: title,
+        text: text,
+        confirmButtonColor: '#6366f1'
+      });
+    }
+
+    function showWarning(title, text) {
+      Swal.fire({
+        icon: 'warning',
+        title: title,
+        text: text,
+        confirmButtonColor: '#6366f1'
+      });
+    }
+  </script>
+</body>
+
+</html>
